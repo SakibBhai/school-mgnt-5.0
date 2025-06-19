@@ -24,6 +24,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
@@ -48,6 +58,9 @@ import {
   BarChart3,
   Clock,
   Send,
+  X,
+  QrCode,
+  Printer,
 } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
@@ -112,7 +125,9 @@ const mockRecentPayments = [
     paymentMethod: "Credit Card",
     status: "Completed",
     date: "2024-01-15",
+    dueDate: "2024-01-10",
     transactionId: "TXN123456789",
+    notes: "Payment received on time",
   },
   {
     id: "PAY002",
@@ -123,7 +138,9 @@ const mockRecentPayments = [
     paymentMethod: "Bank Transfer",
     status: "Completed",
     date: "2024-01-14",
+    dueDate: "2024-01-12",
     transactionId: "TXN123456790",
+    notes: "Sports activity fee for Q1",
   },
   {
     id: "PAY003",
@@ -134,7 +151,9 @@ const mockRecentPayments = [
     paymentMethod: "Debit Card",
     status: "Pending",
     date: "2024-01-13",
+    dueDate: "2024-01-15",
     transactionId: "TXN123456791",
+    notes: "Awaiting bank confirmation",
   },
 ]
 
@@ -168,6 +187,25 @@ export default function FeesPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedFee, setSelectedFee] = useState<any>(null)
+  
+  // Payment-related modals
+  const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false)
+  const [isEditPaymentOpen, setIsEditPaymentOpen] = useState(false)
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [selectedPayment, setSelectedPayment] = useState<any>(null)
+  const [editPaymentForm, setEditPaymentForm] = useState({
+    feeType: "",
+    amount: "",
+    dueDate: "",
+    status: "",
+    notes: "",
+  })
+  const [invoiceOptions, setInvoiceOptions] = useState({
+    includeQR: false,
+    includeSignature: true,
+  })
+  
   const [newFeeStructure, setNewFeeStructure] = useState({
     name: "",
     category: "",
@@ -227,6 +265,66 @@ export default function FeesPage() {
 
   const handleSendReminder = (paymentId: string) => {
     toast.success("Payment reminder sent successfully")
+  }
+
+  // Payment action handlers
+  const handleViewPaymentDetails = (payment: any) => {
+    setSelectedPayment(payment)
+    setIsViewDetailsOpen(true)
+  }
+
+  const handleEditPayment = (payment: any) => {
+    setSelectedPayment(payment)
+    setEditPaymentForm({
+      feeType: payment.feeType,
+      amount: payment.amount.toString(),
+      dueDate: payment.dueDate,
+      status: payment.status,
+      notes: payment.notes || "",
+    })
+    setIsEditPaymentOpen(true)
+  }
+
+  const handleSavePaymentEdit = () => {
+    if (!editPaymentForm.feeType || !editPaymentForm.amount || !editPaymentForm.status) {
+      toast.error("Please fill in all required fields")
+      return
+    }
+
+    if (parseFloat(editPaymentForm.amount) <= 0) {
+      toast.error("Amount must be positive")
+      return
+    }
+
+    toast.success("Payment updated successfully")
+    setIsEditPaymentOpen(false)
+    setSelectedPayment(null)
+  }
+
+  const handleGenerateInvoice = (payment: any) => {
+    setSelectedPayment(payment)
+    setIsInvoiceModalOpen(true)
+  }
+
+  const handleDownloadInvoice = () => {
+    toast.success("Invoice generated and downloaded successfully")
+    setIsInvoiceModalOpen(false)
+  }
+
+  const handlePrintInvoice = () => {
+    toast.success("Invoice sent to printer")
+    setIsInvoiceModalOpen(false)
+  }
+
+  const handleDeletePayment = (payment: any) => {
+    setSelectedPayment(payment)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDeletePayment = () => {
+    toast.success("Payment record deleted successfully")
+    setIsDeleteDialogOpen(false)
+    setSelectedPayment(null)
   }
 
   const getStatusBadge = (status: string) => {
@@ -634,17 +732,25 @@ export default function FeesPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleViewPaymentDetails(payment)}>
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Receipt className="h-4 w-4 mr-2" />
-                              Download Receipt
+                            <DropdownMenuItem onClick={() => handleEditPayment(payment)}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <FileText className="h-4 w-4 mr-2" />
-                              Transaction History
+                            <DropdownMenuItem onClick={() => handleGenerateInvoice(payment)}>
+                              <Receipt className="h-4 w-4 mr-2" />
+                              Generate Invoice
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              className="text-red-600" 
+                              onClick={() => handleDeletePayment(payment)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -838,6 +944,291 @@ export default function FeesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* View Payment Details Modal */}
+      <Dialog open={isViewDetailsOpen} onOpenChange={setIsViewDetailsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Payment Details</DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-4 top-4"
+              onClick={() => setIsViewDetailsOpen(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          {selectedPayment && (
+            <div className="grid grid-cols-2 gap-6 py-4">
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Student Name</Label>
+                  <p className="text-sm font-medium">{selectedPayment.studentName}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Payment ID</Label>
+                  <p className="text-sm font-medium">{selectedPayment.id}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Payment Type</Label>
+                  <p className="text-sm">{selectedPayment.feeType}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Amount</Label>
+                  <p className="text-sm font-medium">{formatCurrency(selectedPayment.amount, "BDT")}</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Paid Date</Label>
+                  <p className="text-sm">{new Date(selectedPayment.date).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Due Date</Label>
+                  <p className="text-sm">{new Date(selectedPayment.dueDate).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Status</Label>
+                  <div className="mt-1">{getStatusBadge(selectedPayment.status)}</div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Payment Method</Label>
+                  <p className="text-sm">{selectedPayment.paymentMethod}</p>
+                </div>
+              </div>
+              <div className="col-span-2">
+                <Label className="text-sm font-medium text-muted-foreground">Notes / Remarks</Label>
+                <p className="text-sm mt-1">{selectedPayment.notes || "No additional notes"}</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Payment Modal */}
+      <Dialog open={isEditPaymentOpen} onOpenChange={setIsEditPaymentOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Payment Entry</DialogTitle>
+            <DialogDescription>
+              Update payment details. Required fields are marked with *
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-payment-type">Payment Type *</Label>
+              <Select
+                value={editPaymentForm.feeType}
+                onValueChange={(value) => setEditPaymentForm({ ...editPaymentForm, feeType: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select payment type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Tuition Fee">Tuition Fee</SelectItem>
+                  <SelectItem value="Activity Fee">Activity Fee</SelectItem>
+                  <SelectItem value="Lab Fee">Lab Fee</SelectItem>
+                  <SelectItem value="Library Fee">Library Fee</SelectItem>
+                  <SelectItem value="Transport Fee">Transport Fee</SelectItem>
+                  <SelectItem value="Examination Fee">Examination Fee</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-payment-amount">Amount ({getCurrencySymbol("BDT")}) *</Label>
+              <Input
+                id="edit-payment-amount"
+                type="number"
+                placeholder="0.00"
+                value={editPaymentForm.amount}
+                onChange={(e) => setEditPaymentForm({ ...editPaymentForm, amount: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-payment-due-date">Due Date</Label>
+              <Input
+                id="edit-payment-due-date"
+                type="date"
+                value={editPaymentForm.dueDate}
+                onChange={(e) => setEditPaymentForm({ ...editPaymentForm, dueDate: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-payment-status">Status *</Label>
+              <Select
+                value={editPaymentForm.status}
+                onValueChange={(value) => setEditPaymentForm({ ...editPaymentForm, status: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="Partial">Partial</SelectItem>
+                  <SelectItem value="Overdue">Overdue</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-payment-notes">Notes</Label>
+              <Textarea
+                id="edit-payment-notes"
+                placeholder="Additional notes or remarks"
+                value={editPaymentForm.notes}
+                onChange={(e) => setEditPaymentForm({ ...editPaymentForm, notes: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditPaymentOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSavePaymentEdit}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Generate Invoice Modal */}
+      <Dialog open={isInvoiceModalOpen} onOpenChange={setIsInvoiceModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Generate Invoice</DialogTitle>
+            <DialogDescription>
+              Review invoice details and download or print
+            </DialogDescription>
+          </DialogHeader>
+          {selectedPayment && (
+            <div className="space-y-6 py-4">
+              {/* Invoice Preview */}
+              <div className="border rounded-lg p-6 bg-gray-50">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-lg font-semibold">EduManage Pro</h3>
+                    <p className="text-sm text-muted-foreground">School Management System</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">Invoice #{selectedPayment.id}</p>
+                    <p className="text-sm text-muted-foreground">{new Date().toLocaleDateString()}</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <h4 className="font-medium mb-2">Student Details</h4>
+                    <p className="text-sm">{selectedPayment.studentName}</p>
+                    <p className="text-sm text-muted-foreground">{selectedPayment.studentId}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-2">Payment Details</h4>
+                    <p className="text-sm">Due: {new Date(selectedPayment.dueDate).toLocaleDateString()}</p>
+                    <p className="text-sm">Method: {selectedPayment.paymentMethod}</p>
+                  </div>
+                </div>
+                
+                <div className="border-t pt-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm">{selectedPayment.feeType}</span>
+                    <span className="text-sm font-medium">{formatCurrency(selectedPayment.amount, "BDT")}</span>
+                  </div>
+                  <div className="flex justify-between items-center font-medium border-t pt-2">
+                    <span>Total Amount</span>
+                    <span>{formatCurrency(selectedPayment.amount, "BDT")}</span>
+                  </div>
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="text-sm">Status</span>
+                    <div>{getStatusBadge(selectedPayment.status)}</div>
+                  </div>
+                </div>
+                
+                {invoiceOptions.includeQR && (
+                  <div className="mt-6 text-center">
+                    <div className="inline-flex items-center justify-center w-16 h-16 border-2 border-dashed border-gray-300 rounded">
+                      <QrCode className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">QR Code for Payment</p>
+                  </div>
+                )}
+                
+                {invoiceOptions.includeSignature && (
+                  <div className="mt-6 border-t pt-4">
+                    <div className="text-right">
+                      <div className="border-b border-gray-300 w-48 ml-auto mb-2"></div>
+                      <p className="text-sm text-muted-foreground">Authorized Signature</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Invoice Options */}
+              <div className="space-y-4">
+                <h4 className="font-medium">Invoice Options</h4>
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="include-qr"
+                      checked={invoiceOptions.includeQR}
+                      onCheckedChange={(checked) => setInvoiceOptions({ ...invoiceOptions, includeQR: checked })}
+                    />
+                    <Label htmlFor="include-qr" className="text-sm">Include QR for payment</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="include-signature"
+                      checked={invoiceOptions.includeSignature}
+                      onCheckedChange={(checked) => setInvoiceOptions({ ...invoiceOptions, includeSignature: checked })}
+                    />
+                    <Label htmlFor="include-signature" className="text-sm">Include signature block</Label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsInvoiceModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="outline" onClick={handlePrintInvoice}>
+              <Printer className="h-4 w-4 mr-2" />
+              Print Invoice
+            </Button>
+            <Button onClick={handleDownloadInvoice}>
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Payment Record</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this payment record? This action cannot be undone.
+              {selectedPayment && (
+                <div className="mt-2 p-3 bg-gray-50 rounded border">
+                  <p className="text-sm font-medium">{selectedPayment.studentName}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedPayment.feeType} - {formatCurrency(selectedPayment.amount, "BDT")}
+                  </p>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeletePayment}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Confirm Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

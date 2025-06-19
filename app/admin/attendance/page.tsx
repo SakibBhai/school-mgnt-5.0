@@ -37,6 +37,9 @@ import {
   Eye,
   Edit,
   MoreHorizontal,
+  TrendingUp,
+  TrendingDown,
+  Minus,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -165,6 +168,9 @@ export default function AttendancePage() {
   const [isMarkAttendanceOpen, setIsMarkAttendanceOpen] = useState(false)
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false)
   const [selectedAttendanceRecord, setSelectedAttendanceRecord] = useState(null)
+  const [selectedSectionDetails, setSelectedSectionDetails] = useState(null)
+  const [isSectionReportOpen, setIsSectionReportOpen] = useState(false)
+  const [selectedSectionForReport, setSelectedSectionForReport] = useState(null)
 
   const handleMarkAttendance = () => {
     setIsMarkAttendanceOpen(true)
@@ -172,6 +178,36 @@ export default function AttendancePage() {
 
   const handleViewDetails = (record) => {
     setSelectedAttendanceRecord(record)
+  }
+
+  const handleSectionDetails = (section) => {
+    // Enhanced section details with student-wise breakdown
+    const enhancedSection = {
+      ...section,
+      students: [
+        { id: 1, rollNumber: `${section.class}${section.section}001`, name: "John Doe", attendanceRate: 95.2, totalDays: 42, presentDays: 40, absentDays: 2, lateDays: 0, lastAbsent: "2024-01-15", trend: "improving" },
+        { id: 2, rollNumber: `${section.class}${section.section}002`, name: "Sarah Wilson", attendanceRate: 88.1, totalDays: 42, presentDays: 37, absentDays: 4, lateDays: 1, lastAbsent: "2024-01-20", trend: "stable" },
+        { id: 3, rollNumber: `${section.class}${section.section}003`, name: "Mike Johnson", attendanceRate: 92.9, totalDays: 42, presentDays: 39, absentDays: 2, lateDays: 1, lastAbsent: "2024-01-18", trend: "improving" },
+        { id: 4, rollNumber: `${section.class}${section.section}004`, name: "Emma Davis", attendanceRate: 97.6, totalDays: 42, presentDays: 41, absentDays: 1, lateDays: 0, lastAbsent: "2024-01-10", trend: "excellent" },
+        { id: 5, rollNumber: `${section.class}${section.section}005`, name: "Tom Anderson", attendanceRate: 83.3, totalDays: 42, presentDays: 35, absentDays: 6, lateDays: 1, lastAbsent: "2024-01-22", trend: "declining" },
+        { id: 6, rollNumber: `${section.class}${section.section}006`, name: "Lisa Brown", attendanceRate: 90.5, totalDays: 42, presentDays: 38, absentDays: 3, lateDays: 1, lastAbsent: "2024-01-19", trend: "stable" },
+        { id: 7, rollNumber: `${section.class}${section.section}007`, name: "David Wilson", attendanceRate: 94.0, totalDays: 42, presentDays: 39, absentDays: 2, lateDays: 1, lastAbsent: "2024-01-16", trend: "improving" },
+        { id: 8, rollNumber: `${section.class}${section.section}008`, name: "Amy Johnson", attendanceRate: 86.9, totalDays: 42, presentDays: 36, absentDays: 5, lateDays: 1, lastAbsent: "2024-01-21", trend: "stable" }
+      ],
+      weeklyTrend: [
+        { week: "Week 1", attendance: 94.2 },
+        { week: "Week 2", attendance: 91.8 },
+        { week: "Week 3", attendance: 93.5 },
+        { week: "Week 4", attendance: 89.7 },
+        { week: "Current", attendance: section.attendanceRate }
+      ]
+    }
+    setSelectedSectionDetails(enhancedSection)
+  }
+
+  const handleSectionReport = (section) => {
+    setSelectedSectionForReport(section)
+    setIsSectionReportOpen(true)
   }
 
   const totalStudents = sectionStats.reduce((sum, section) => sum + section.totalStudents, 0)
@@ -532,11 +568,11 @@ export default function AttendancePage() {
                   </div>
 
                   <div className="flex items-center space-x-2 pt-2">
-                    <Button variant="outline" size="sm" className="flex-1">
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => handleSectionDetails(section)}>
                       <Eye className="h-3 w-3 mr-1" />
                       Details
                     </Button>
-                    <Button variant="outline" size="sm" className="flex-1">
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => handleSectionReport(section)}>
                       <FileText className="h-3 w-3 mr-1" />
                       Report
                     </Button>
@@ -833,6 +869,203 @@ export default function AttendancePage() {
             <Button>
               <Send className="h-4 w-4 mr-2" />
               Send Notifications
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Section Details Dialog */}
+      <Dialog open={!!selectedSectionDetails} onOpenChange={() => setSelectedSectionDetails(null)}>
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedSectionDetails?.class} - Section {selectedSectionDetails?.section} Details
+            </DialogTitle>
+            <DialogDescription>
+              Comprehensive attendance overview and student-wise breakdown
+            </DialogDescription>
+          </DialogHeader>
+          {selectedSectionDetails && (
+            <div className="space-y-6">
+              {/* Section Summary */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">{selectedSectionDetails.totalStudents}</div>
+                  <div className="text-sm text-gray-600">Total Students</div>
+                </div>
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">{selectedSectionDetails.avgAttendance}%</div>
+                  <div className="text-sm text-gray-600">Avg Attendance</div>
+                </div>
+                <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                  <div className="text-2xl font-bold text-yellow-600">{selectedSectionDetails.perfectAttendance}</div>
+                  <div className="text-sm text-gray-600">Perfect Attendance</div>
+                </div>
+                <div className="text-center p-4 bg-red-50 rounded-lg">
+                  <div className="text-2xl font-bold text-red-600">{selectedSectionDetails.chronicAbsentees}</div>
+                  <div className="text-sm text-gray-600">At Risk Students</div>
+                </div>
+              </div>
+
+              {/* Student List */}
+              <div>
+                <h4 className="font-medium mb-3">Student Attendance Details</h4>
+                <div className="border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Roll Number</TableHead>
+                        <TableHead>Student Name</TableHead>
+                        <TableHead>Attendance Rate</TableHead>
+                        <TableHead>Present Days</TableHead>
+                        <TableHead>Absent Days</TableHead>
+                        <TableHead>Late Days</TableHead>
+                        <TableHead>Last Absent</TableHead>
+                        <TableHead>Trend</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {selectedSectionDetails.students?.map((student) => (
+                        <TableRow key={student.id}>
+                          <TableCell className="font-mono">{student.rollNumber}</TableCell>
+                          <TableCell className="font-medium">{student.name}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <span className={`font-bold ${student.attendanceRate >= 95 ? 'text-green-600' : student.attendanceRate >= 85 ? 'text-yellow-600' : 'text-red-600'}`}>
+                                {student.attendanceRate}%
+                              </span>
+                              <Progress value={student.attendanceRate} className="w-16" />
+                            </div>
+                          </TableCell>
+                          <TableCell>{student.presentDays}/{student.totalDays}</TableCell>
+                          <TableCell>{student.absentDays}</TableCell>
+                          <TableCell>{student.lateDays}</TableCell>
+                          <TableCell className="text-sm text-gray-600">{student.lastAbsent}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-1">
+                              {student.trend === 'improving' && <TrendingUp className="h-4 w-4 text-green-600" />}
+                              {student.trend === 'declining' && <TrendingDown className="h-4 w-4 text-red-600" />}
+                              {student.trend === 'excellent' && <CheckCircle className="h-4 w-4 text-green-600" />}
+                              {student.trend === 'stable' && <Minus className="h-4 w-4 text-gray-600" />}
+                              <span className="text-xs capitalize">{student.trend}</span>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedSectionDetails(null)}>
+              Close
+            </Button>
+            <Button onClick={() => handleSectionReport(selectedSectionDetails)}>
+              <FileText className="h-4 w-4 mr-2" />
+              Generate Report
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Section Report Dialog */}
+      <Dialog open={isSectionReportOpen} onOpenChange={setIsSectionReportOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Generate Section Report</DialogTitle>
+            <DialogDescription>
+              Generate detailed attendance report for {selectedSectionForReport?.class} - Section {selectedSectionForReport?.section}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="reportType">Report Type</Label>
+              <Select defaultValue="detailed">
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="detailed">Detailed Student Report</SelectItem>
+                  <SelectItem value="summary">Section Summary</SelectItem>
+                  <SelectItem value="attendance">Attendance Trends</SelectItem>
+                  <SelectItem value="alerts">At-Risk Students</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>From Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      Select date
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar mode="single" initialFocus />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label>To Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      Select date
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar mode="single" initialFocus />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Include</Label>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="includeAbsent" defaultChecked />
+                  <Label htmlFor="includeAbsent" className="text-sm">Absent students details</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="includeLate" defaultChecked />
+                  <Label htmlFor="includeLate" className="text-sm">Late arrival records</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="includeTrends" defaultChecked />
+                  <Label htmlFor="includeTrends" className="text-sm">Attendance trends</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="includeParentInfo" />
+                  <Label htmlFor="includeParentInfo" className="text-sm">Parent contact information</Label>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="reportFormat">Format</Label>
+              <Select defaultValue="pdf">
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pdf">PDF</SelectItem>
+                  <SelectItem value="excel">Excel</SelectItem>
+                  <SelectItem value="csv">CSV</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsSectionReportOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => setIsSectionReportOpen(false)}>
+              <Download className="h-4 w-4 mr-2" />
+              Generate Report
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -24,6 +24,7 @@ import {
   DollarSign,
   MessageSquare,
   Library,
+  Package,
   Settings,
   Bell,
   Clock,
@@ -80,7 +81,10 @@ const menuItems = [
   },
   {
     title: "Resources",
-    items: [{ title: "Library", url: "/admin/library", icon: Library }],
+    items: [
+      { title: "Library", url: "/admin/library", icon: Library },
+      { title: "Inventory", url: "/admin/inventory", icon: Package },
+    ],
   },
   {
     title: "System",
