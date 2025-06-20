@@ -243,7 +243,7 @@ export default function CalendarPage() {
         endTime: event.endTime,
         category: event.category,
         location: event.location || "",
-        recurrence: event.recurrence || "none",
+        recurrence: (event.recurrence || "none") as "none" | "daily" | "weekly" | "monthly" | "yearly",
         reminders: event.reminders || [30],
       })
       setIsEditMode(true)

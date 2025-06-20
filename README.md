@@ -1,30 +1,147 @@
-# School Management System
+# EduManage Pro - School Management System
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+A comprehensive, modern school management system built with Next.js, TypeScript, and Tailwind CSS. This application provides a complete solution for managing students, teachers, classes, exams, attendance, fees, and more.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/sakibch-bhaus-projects/v0-school-management-system)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/4TKjVt3R040)
+## 🚀 Features
 
-## Overview
+### Admin Dashboard
+- **Student Management**: Complete student profiles, enrollment, and academic records
+- **Teacher Management**: Staff profiles, assignments, and performance tracking
+- **Class Management**: Class creation, section management, and subject assignments
+- **Exam Management**: Exam scheduling, result entry, and marksheet generation
+- **Attendance Tracking**: Real-time attendance monitoring and analytics
+- **Fee Management**: Fee collection, payment tracking, and financial reports
+- **Library Management**: Book inventory, issue/return tracking
+- **Inventory Management**: School asset and resource management
+- **Notice Board**: Announcements and communication system
+- **Calendar**: Event scheduling and academic calendar
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+### Student Portal
+- Personal dashboard with academic overview
+- Fee payment and transaction history
+- Notice board and announcements
+- Academic performance tracking
 
-## Deployment
+## 🛠️ Tech Stack
 
-Your project is live at:
+- **Framework**: Next.js 15+ with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **UI Components**: ShadCN/UI
+- **Icons**: Lucide React
+- **State Management**: React Hooks
+- **Animations**: Framer Motion (ready for integration)
 
-**[https://vercel.com/sakibch-bhaus-projects/v0-school-management-system](https://vercel.com/sakibch-bhaus-projects/v0-school-management-system)**
+## 📦 Installation
 
-## Build your app
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/SakibBhai/school-mgnt-5.0.git
+   cd school-mgnt-5.0
+   ```
 
-Continue building your app on:
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-**[https://v0.dev/chat/projects/4TKjVt3R040](https://v0.dev/chat/projects/4TKjVt3R040)**
+3. **Run the development server**
+   ```bash
+   npm run dev
+   ```
 
-## How It Works
+4. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+## 🏗️ Project Structure
+
+```
+school-mgnt-5.0/
+├── app/
+│   ├── admin/              # Admin dashboard pages
+│   │   ├── dashboard/       # Main admin dashboard
+│   │   ├── students/        # Student management
+│   │   ├── teachers/        # Teacher management
+│   │   ├── classes/         # Class management
+│   │   ├── exams/          # Exam management
+│   │   ├── attendance/     # Attendance tracking
+│   │   ├── fees/           # Fee management
+│   │   ├── library/        # Library management
+│   │   ├── inventory/      # Inventory management
+│   │   ├── notices/        # Notice board
+│   │   ├── calendar/       # Calendar events
+│   │   └── settings/       # System settings
+│   ├── portal/             # Student portal
+│   └── globals.css         # Global styles
+├── components/
+│   ├── ui/                 # Reusable UI components
+│   ├── admin-header.tsx    # Admin navigation header
+│   ├── admin-sidebar.tsx   # Admin sidebar navigation
+│   ├── student-header.tsx  # Student portal header
+│   └── student-sidebar.tsx # Student portal sidebar
+├── lib/
+│   └── utils.ts           # Utility functions
+└── public/                # Static assets
+```
+
+## 🎨 Design System
+
+- **Color Scheme**: Modern black and white with accent colors
+- **Typography**: Clean, readable fonts with proper hierarchy
+- **Components**: Consistent UI components using ShadCN/UI
+- **Responsive**: Mobile-first design approach
+- **Accessibility**: WCAG compliant components
+
+## 🔧 Development
+
+### Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+
+### Code Standards
+
+- TypeScript for type safety
+- ESLint for code quality
+- Prettier for code formatting
+- Component-based architecture
+- Responsive design patterns
+
+## 🚀 Deployment
+
+The application is configured for easy deployment on Vercel:
+
+1. **Connect your repository** to Vercel
+2. **Configure environment variables** (if any)
+3. **Deploy** - Vercel will automatically build and deploy
+
+## 📱 Features in Development
+
+- [ ] Real-time notifications
+- [ ] Advanced analytics dashboard
+- [ ] Mobile app integration
+- [ ] API documentation
+- [ ] Multi-language support
+- [ ] Advanced reporting system
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 📞 Support
+
+For support and questions, please open an issue in the GitHub repository.
+
+---
+
+**EduManage Pro** - Empowering educational institutions with modern technology.

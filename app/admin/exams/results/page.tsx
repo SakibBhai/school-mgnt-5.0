@@ -87,6 +87,34 @@ const mockExams = [
   },
 ]
 
+// Mock classes and sections data
+const mockClasses = [
+  {
+    id: "grade-9",
+    name: "Grade 9",
+    sections: [
+      { id: "A", name: "A", subjects: ["Mathematics", "Physics", "Chemistry", "English", "History"] },
+      { id: "B", name: "B", subjects: ["Mathematics", "Physics", "Chemistry", "English", "History"] },
+    ],
+  },
+  {
+    id: "grade-10",
+    name: "Grade 10",
+    sections: [
+      { id: "A", name: "A", subjects: ["Advanced Mathematics", "Physics", "Chemistry", "English", "Computer Science"] },
+      { id: "B", name: "B", subjects: ["Advanced Mathematics", "Physics", "Chemistry", "English", "Biology"] },
+    ],
+  },
+  {
+    id: "grade-11",
+    name: "Grade 11",
+    sections: [
+      { id: "A", name: "A", subjects: ["Calculus", "Advanced Physics", "Organic Chemistry", "Literature", "Computer Science"] },
+      { id: "B", name: "B", subjects: ["Calculus", "Advanced Physics", "Organic Chemistry", "Literature", "Biology"] },
+    ],
+  },
+]
+
 const mockStudents = [
   {
     id: "STU001",
@@ -178,6 +206,9 @@ export default function ResultsPage() {
   const [filterStatus, setFilterStatus] = useState("all")
   const [isEntryDialogOpen, setIsEntryDialogOpen] = useState(false)
   const [selectedExam, setSelectedExam] = useState<any>(null)
+  const [selectedClass, setSelectedClass] = useState<string>("") 
+  const [selectedSection, setSelectedSection] = useState<string>("") 
+  const [selectedSubject, setSelectedSubject] = useState<string>("") 
   const [studentMarks, setStudentMarks] = useState<any>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState("results")
@@ -185,9 +216,62 @@ export default function ResultsPage() {
   const [isMarkSheetOpen, setIsMarkSheetOpen] = useState(false)
   const [autoGenerateMarkSheets, setAutoGenerateMarkSheets] = useState(true)
 
+  // Get students for selected class and section
+  const getStudentsForClassSection = (className: string, sectionName: string) => {
+    return mockStudents.filter((student) => student.class === className && student.section === sectionName)
+  }
+
   // Get students for selected exam
   const getStudentsForExam = (exam: any) => {
     return mockStudents.filter((student) => student.class === exam.class && student.section === exam.section)
+  }
+
+  // Get available sections for selected class
+  const getAvailableSections = (className: string) => {
+    const classData = mockClasses.find(cls => cls.name === className)
+    return classData ? classData.sections : []
+  }
+
+  // Get available subjects for selected class and section
+  const getAvailableSubjects = (className: string, sectionName: string) => {
+    const classData = mockClasses.find(cls => cls.name === className)
+    if (!classData) return []
+    const section = classData.sections.find(sec => sec.name === sectionName)
+    return section ? section.subjects : []
+  }
+
+  // Get filtered exams based on selections
+  const getFilteredExams = () => {
+    return mockExams.filter(exam => {
+      const classMatch = !selectedClass || exam.class === selectedClass
+      const sectionMatch = !selectedSection || exam.section === selectedSection
+      const subjectMatch = !selectedSubject || exam.subject === selectedSubject
+      return classMatch && sectionMatch && subjectMatch
+    })
+  }
+
+  // Handle class selection
+  const handleClassSelect = (className: string) => {
+    setSelectedClass(className)
+    setSelectedSection("")
+    setSelectedSubject("")
+    setSelectedExam(null)
+    setStudentMarks({})
+  }
+
+  // Handle section selection
+  const handleSectionSelect = (sectionName: string) => {
+    setSelectedSection(sectionName)
+    setSelectedSubject("")
+    setSelectedExam(null)
+    setStudentMarks({})
+  }
+
+  // Handle subject selection
+  const handleSubjectSelect = (subjectName: string) => {
+    setSelectedSubject(subjectName)
+    setSelectedExam(null)
+    setStudentMarks({})
   }
 
   // Handle exam selection for result entry
@@ -209,6 +293,16 @@ export default function ResultsPage() {
 
       setStudentMarks(initialMarks)
     }
+  }
+
+  // Reset form when dialog closes
+  const handleDialogClose = () => {
+    setIsEntryDialogOpen(false)
+    setSelectedClass("")
+    setSelectedSection("")
+    setSelectedSubject("")
+    setSelectedExam(null)
+    setStudentMarks({})
   }
 
   // Handle mark input change
@@ -638,7 +732,7 @@ export default function ResultsPage() {
             <Download className="h-4 w-4 mr-2" />
             Export Reports
           </Button>
-          <Dialog open={isEntryDialogOpen} onOpenChange={setIsEntryDialogOpen}>
+          <Dialog open={isEntryDialogOpen} onOpenChange={handleDialogClose}>
             <DialogTrigger asChild>
               <Button>
                 <Calculator className="h-4 w-4 mr-2" />
@@ -654,38 +748,103 @@ export default function ResultsPage() {
               </DialogHeader>
 
               <div className="space-y-6">
-                {/* Exam Selection */}
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="examSelect">Select Exam</Label>
-                      <Select onValueChange={handleExamSelect}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choose an exam" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {mockExams.map((exam) => (
-                            <SelectItem key={exam.id} value={exam.id}>
-                              {exam.name} - {exam.class} {exam.section} ({exam.totalMarks} marks)
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Auto-generate Mark Sheets</Label>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="autoGenerate"
-                          checked={autoGenerateMarkSheets}
-                          onCheckedChange={setAutoGenerateMarkSheets}
-                        />
-                        <Label htmlFor="autoGenerate" className="text-sm">
-                          Automatically generate mark sheets after saving results
-                        </Label>
+                {/* Step-by-Step Form Fields */}
+                <div className="space-y-6">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-gray-900 mb-4">📚 Basic Selection Fields</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="classSelect">🏫 Select Class</Label>
+                        <Select value={selectedClass} onValueChange={handleClassSelect}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choose a class" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {mockClasses.map((cls) => (
+                              <SelectItem key={cls.id} value={cls.name}>
+                                {cls.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="sectionSelect">📋 Select Section</Label>
+                        <Select 
+                          value={selectedSection} 
+                          onValueChange={handleSectionSelect}
+                          disabled={!selectedClass}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={selectedClass ? "Choose a section" : "Select class first"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getAvailableSections(selectedClass).map((section) => (
+                              <SelectItem key={section.id} value={section.name}>
+                                Section {section.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="subjectSelect">📖 Select Subject</Label>
+                        <Select 
+                          value={selectedSubject} 
+                          onValueChange={handleSubjectSelect}
+                          disabled={!selectedClass || !selectedSection}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={selectedSection ? "Choose a subject" : "Select section first"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getAvailableSubjects(selectedClass, selectedSection).map((subject) => (
+                              <SelectItem key={subject} value={subject}>
+                                {subject}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="examSelect">📝 Select Exam</Label>
+                        <Select 
+                          value={selectedExam?.id || ""} 
+                          onValueChange={handleExamSelect}
+                          disabled={!selectedClass || !selectedSection || !selectedSubject}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={selectedSubject ? "Choose an exam" : "Complete selections above"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getFilteredExams().map((exam) => (
+                              <SelectItem key={exam.id} value={exam.id}>
+                                {exam.name} ({exam.totalMarks} marks)
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
+                  
+                  <div className="space-y-2">
+                    <Label>⚙️ Options</Label>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="autoGenerate"
+                        checked={autoGenerateMarkSheets}
+                        onCheckedChange={setAutoGenerateMarkSheets}
+                      />
+                      <Label htmlFor="autoGenerate" className="text-sm">
+                        Automatically generate mark sheets after saving results
+                      </Label>
+                    </div>
+                  </div>
+                </div>
 
                   {selectedExam && (
                     <div className="bg-blue-50 p-4 rounded-lg">
@@ -708,25 +867,41 @@ export default function ResultsPage() {
                   )}
                 </div>
 
-                {/* Student Results Entry */}
+                {/* Student Entry Table */}
                 {selectedExam && (
                   <div className="space-y-4">
-                    <h4 className="font-semibold">Enter Student Marks</h4>
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-blue-900 mb-2">👩‍🎓 Student Entry Table</h4>
+                      <div className="grid grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium">Subject:</span> {selectedExam.subject}
+                        </div>
+                        <div>
+                          <span className="font-medium">Class:</span> {selectedExam.class} - Section {selectedExam.section}
+                        </div>
+                        <div>
+                          <span className="font-medium">Date:</span> {new Date(selectedExam.date).toLocaleDateString()}
+                        </div>
+                        <div>
+                          <span className="font-medium">Total Marks:</span> {selectedExam.totalMarks}
+                        </div>
+                      </div>
+                    </div>
+                    
                     <div className="border rounded-lg overflow-hidden">
                       <Table>
                         <TableHeader>
-                          <TableRow>
-                            <TableHead>Roll No.</TableHead>
-                            <TableHead>Student Name</TableHead>
-                            <TableHead>Marks Obtained</TableHead>
-                            <TableHead>Percentage</TableHead>
-                            <TableHead>Grade</TableHead>
-                            <TableHead>Remarks</TableHead>
-                            <TableHead>Absent</TableHead>
+                          <TableRow className="bg-gray-50">
+                            <TableHead className="font-semibold">Student Name</TableHead>
+                            <TableHead className="font-semibold">Roll No.</TableHead>
+                            <TableHead className="font-semibold">Mark Obtained</TableHead>
+                            <TableHead className="font-semibold">Grade (optional)</TableHead>
+                            <TableHead className="font-semibold">Remarks</TableHead>
+                            <TableHead className="font-semibold text-center">Absent</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {getStudentsForExam(selectedExam).map((student) => {
+                          {getStudentsForExam(selectedExam).map((student, index) => {
                             const marks = Number.parseInt(studentMarks[student.id]?.marksObtained) || 0
                             const { percentage, grade } =
                               marks > 0
@@ -734,43 +909,52 @@ export default function ResultsPage() {
                                 : { percentage: 0, grade: "-" }
 
                             return (
-                              <TableRow key={student.id}>
-                                <TableCell className="font-medium">{student.rollNumber}</TableCell>
-                                <TableCell>{student.name}</TableCell>
+                              <TableRow key={student.id} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                                <TableCell className="font-medium">{student.name}</TableCell>
+                                <TableCell className="text-muted-foreground">{student.rollNumber}</TableCell>
                                 <TableCell>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    max={selectedExam.totalMarks}
-                                    value={studentMarks[student.id]?.marksObtained || ""}
-                                    onChange={(e) => handleMarkChange(student.id, "marksObtained", e.target.value)}
-                                    disabled={studentMarks[student.id]?.absent}
-                                    className="w-20"
-                                    placeholder="0"
-                                  />
-                                  <span className="text-sm text-muted-foreground ml-2">
-                                    / {selectedExam.totalMarks}
-                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      max={selectedExam.totalMarks}
+                                      value={studentMarks[student.id]?.marksObtained || ""}
+                                      onChange={(e) => handleMarkChange(student.id, "marksObtained", e.target.value)}
+                                      disabled={studentMarks[student.id]?.absent}
+                                      className="w-20 text-center"
+                                      placeholder="0"
+                                      tabIndex={index * 3 + 1}
+                                    />
+                                    <span className="text-sm text-muted-foreground">
+                                      / {selectedExam.totalMarks}
+                                    </span>
+                                  </div>
+                                  {marks > selectedExam.totalMarks && (
+                                    <p className="text-xs text-red-600 mt-1">Mark cannot exceed {selectedExam.totalMarks}</p>
+                                  )}
                                 </TableCell>
                                 <TableCell>
-                                  <span className="font-medium">{percentage}%</span>
-                                </TableCell>
-                                <TableCell>
-                                  {grade !== "-" && <Badge className={getGradeColor(grade)}>{grade}</Badge>}
+                                  {grade !== "-" && (
+                                    <Badge className={getGradeColor(grade)} variant="secondary">
+                                      {grade} ({percentage}%)
+                                    </Badge>
+                                  )}
                                 </TableCell>
                                 <TableCell>
                                   <Input
                                     value={studentMarks[student.id]?.remarks || ""}
                                     onChange={(e) => handleMarkChange(student.id, "remarks", e.target.value)}
                                     disabled={studentMarks[student.id]?.absent}
-                                    className="w-32"
-                                    placeholder="Optional"
+                                    className="w-40"
+                                    placeholder="Optional remarks"
+                                    tabIndex={index * 3 + 2}
                                   />
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="text-center">
                                   <Checkbox
                                     checked={studentMarks[student.id]?.absent || false}
                                     onCheckedChange={(checked) => handleMarkChange(student.id, "absent", checked)}
+                                    tabIndex={index * 3 + 3}
                                   />
                                 </TableCell>
                               </TableRow>
@@ -783,8 +967,8 @@ export default function ResultsPage() {
                 )}
               </div>
 
-              <DialogFooter className="flex justify-between">
-                <Button variant="outline" onClick={() => setIsEntryDialogOpen(false)}>
+              <DialogFooter className="flex justify-between pt-6 border-t">
+                <Button variant="outline" onClick={handleDialogClose}>
                   Cancel
                 </Button>
                 <div className="flex gap-2">
@@ -792,7 +976,11 @@ export default function ResultsPage() {
                     <Save className="h-4 w-4 mr-2" />
                     Save as Draft
                   </Button>
-                  <Button onClick={handleSubmitResults} disabled={!selectedExam || isSubmitting}>
+                  <Button 
+                    onClick={handleSubmitResults} 
+                    disabled={!selectedExam || isSubmitting}
+                    className="bg-black hover:bg-gray-800 text-white"
+                  >
                     {isSubmitting ? (
                       <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                     ) : (
